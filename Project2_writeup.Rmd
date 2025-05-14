@@ -1,0 +1,89 @@
+---
+title: "Project 2"
+author: "Name: Kira Degelsmith  \n Partner: Felix Lopez"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+```{r setup, include = FALSE}
+
+#### Load necessary packages ####
+packages <- c("knitr", "readr", "dplyr", "leaflet", "cowplot")
+
+install_me <- packages[!(packages %in% installed.packages()[, "Package"])]
+if (length(install_me)) install.packages(install_me)
+
+library(knitr)
+library(readr)
+library(dplyr)
+library(leaflet)
+library(cowplot)
+```
+
+# Data
+
+## WHO Global Data
+Added by Kira Degelsmith
+```{bash fetch, include = FALSE}
+
+curl -L -o confirmed_global.csv https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv
+
+curl -L -o deaths_global.csv https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv
+
+curl -L -o recovered_global.csv https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv
+
+```
+
+## USPRT US Data
+Added by Felix Lopez
+```{bash fetch, include = FALSE}
+
+
+
+```
+
+## Read Data
+```{r data}
+confirmed_global <- read_csv('confirmed_global.csv')
+deaths_global <- read_csv('deaths_global.csv')
+recovered_global <- read_csv('recovered_global.csv')
+
+# confirmed_us <- read_csv()
+# deaths_us <- read_csv()
+```
+
+
+# Project Objectives
+
+## Objective 1
+```{r ob1}
+
+```
+
+## Objective 2
+```{r ob2}
+
+```
+
+## Objective 3
+```{r ob3}
+
+```
+
+## Objective 4
+
+```{r ob4}
+
+```
+
+### GitHub Log
+```{bash gitlog} 
+git log --pretty=format:"%nSubject: %s%nAuthor: %aN%nDate: %aD%nBody: %b"
+```
+
+
+
+
+
