@@ -36,11 +36,12 @@ curl -L -o recovered_global.csv https://raw.githubusercontent.com/CSSEGISandData
 
 ```
 
-## USPRT US Data
-Added by Felix Lopez
-```{bash fetch, include = FALSE}
+## USPRT US Data  
+Added by Felix Lopez  
+```{bash fetch_us, include = FALSE}
+curl -L -o time_series_covid19_confirmed_US.csv https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv
 
-
+curl -L -o time_series_covid19_deaths_US.csv https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv
 
 ```
 
@@ -50,8 +51,32 @@ confirmed_global <- read_csv('confirmed_global.csv')
 deaths_global <- read_csv('deaths_global.csv')
 recovered_global <- read_csv('recovered_global.csv')
 
-# confirmed_us <- read_csv()
-# deaths_us <- read_csv()
+confirmed_us <- read_csv("time_series_covid19_confirmed_US.csv")
+deaths_us <- read_csv("time_series_covid19_deaths_US.csv")
+
+## (Felix)
+
+# Get latest date column
+latest_date_us <- names(confirmed_us)[ncol(confirmed_us)]
+
+# Group US confirmed by state
+confirmed_us_summary <- confirmed_us %>%
+  group_by(Province_State) %>%
+  summarise(total_confirmed = sum(!!sym(latest_date_us), na.rm = TRUE))
+
+# Group US deaths by state
+deaths_us_summary <- deaths_us %>%
+  group_by(Province_State) %>%
+  summarise(total_deaths = sum(!!sym(latest_date_us), na.rm = TRUE))
+
+# Merge
+us_summary <- left_join(confirmed_us_summary, deaths_us_summary, by = "Province_State")
+
+# Optional: Preview
+head(us_summary)
+
+##The code above downloads and processes the US COVID-19 confirmed and death data. It extracts the most recent totals for each state and merges the two datasets into a unified summary. 
+
 ```
 
 
