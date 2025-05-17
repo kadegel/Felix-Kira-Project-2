@@ -10,7 +10,19 @@ output:
 ```{r setup, include = FALSE}
 
 #### Load necessary packages ####
-packages <- c("knitr", "readr", "dplyr", "leaflet", "cowplot")
+packages <- c("knitr", "readr", "dplyr", "leaflet", "cowplot", "tidyr", "ggplot2")
+
+installed_packages <- rownames(installed.packages())
+for (p in packages) {
+  if (!(p %in% installed_packages)) {
+    install.packages(p)
+  }
+}
+
+# Load all packages
+for (p in packages) {
+  library(p, character.only = TRUE)
+}
 
 install_me <- packages[!(packages %in% installed.packages()[, "Package"])]
 if (length(install_me)) install.packages(install_me)
@@ -72,7 +84,7 @@ deaths_us_summary <- deaths_us %>%
 # Merge
 us_summary <- left_join(confirmed_us_summary, deaths_us_summary, by = "Province_State")
 
-# Optional: Preview
+# Preview of table
 head(us_summary)
 
 ##The code above downloads and processes the US COVID-19 confirmed and death data. It extracts the most recent totals for each state and merges the two datasets into a unified summary. 
@@ -87,13 +99,69 @@ head(us_summary)
 
 ```
 
-## Objective 2
+## Objective 2 - 
+
 ```{r ob2}
 
 ```
 
-## Objective 3
+## Objective 3 Zooming Into Our State (Felix)
+We filtered the dataset to focus on California and reshaped the data to show daily confirmed COVID-19 cases. A statewide trend plot was created, marking key milestones: second vaccine dose, Delta, and Omicron variants. We then identified the top three counties by case count and plotted their trends over time. The final visualization compares statewide and county-level patterns side by side.
+
 ```{r ob3}
+
+# Filter for California
+ca_data <- confirmed_us %>%
+  filter(Province_State == "California")
+
+# Convert the data to long format
+ca_long <- ca_data %>%
+  pivot_longer(cols = matches("^\\d+/\\d+/\\d+$"), 
+               names_to = "Date", 
+               values_to = "Confirmed") %>%
+  mutate(Date = as.Date(Date, format = "%m/%d/%y"))
+# Sum confirmations across all counties for each date
+ca_statewide <- ca_long %>%
+  group_by(Date) %>%
+  summarize(Total_Confirmed = sum(Confirmed))
+
+# Key dates
+second_dose <- as.Date("2021-03-12")
+delta_date <- as.Date("2021-05-11")
+omicron_date <- as.Date("2021-11-26")
+
+# Create statewide plot
+p1 <- ggplot(ca_statewide, aes(x = Date, y = Total_Confirmed)) +
+  geom_point(color = "blue", size = 0.5) +
+  geom_vline(xintercept = as.numeric(second_dose), color = "purple", linetype = "dashed") +
+  geom_vline(xintercept = as.numeric(delta_date), color = "orange", linetype = "dashed") +
+  geom_vline(xintercept = as.numeric(omicron_date), color = "red", linetype = "dashed") +
+  labs(title = "California COVID-19 Confirmations Over Time",
+       x = "Date", y = "Total Confirmations")
+
+# Find top 3 counties by max confirmation
+top3_counties <- ca_long %>%
+  group_by(Admin2) %>%
+  summarize(Max_Confirmed = max(Confirmed)) %>%
+  arrange(desc(Max_Confirmed)) %>%
+  slice(1:3) %>%
+  pull(Admin2)
+
+# Filter for top 3 counties
+top3_data <- ca_long %>%
+  filter(Admin2 %in% top3_counties)
+
+# Plot top 3 counties
+p2 <- ggplot(top3_data, aes(x = Date, y = Confirmed, color = Admin2)) +
+  geom_point(size = 0.5) +
+  geom_vline(xintercept = as.numeric(second_dose), color = "purple", linetype = "dashed") +
+  geom_vline(xintercept = as.numeric(delta_date), color = "orange", linetype = "dashed") +
+  geom_vline(xintercept = as.numeric(omicron_date), color = "red", linetype = "dashed") +
+  labs(title = "Top 3 CA Counties COVID-19 Confirmations",
+       x = "Date", y = "Confirmed Cases") +
+  theme(legend.position = "bottom", legend.title = element_blank())
+
+plot_grid(p1, p2, labels = c("A", "B"))
 
 ```
 
