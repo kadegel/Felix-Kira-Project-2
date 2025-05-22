@@ -32,7 +32,12 @@ library(readr)
 library(dplyr)
 library(leaflet)
 library(cowplot)
+<<<<<<< HEAD
 library(tidyverse)
+=======
+library(tidyr)
+library(ggplot2)
+>>>>>>> c8a4c4d6fa2724f929a04554679e89d564f54f8c
 ```
 
 # Data
@@ -97,13 +102,114 @@ head(us_summary)
 
 ## Objective 1
 ```{r ob1}
+# Create data frame with country total confirmed cases and mean long/lat
+global_conf_totals <- confirmed_global %>% 
+  mutate(conf = rowSums(across(5:ncol(confirmed_global)))) %>% 
+  group_by(`Country/Region`) %>% 
+  summarize(mean_lat = mean(Lat, na.rm=TRUE),
+            mean_long = mean(Long, na.rm=TRUE),
+            total_conf = sum(conf, na.rm=TRUE))
 
+# Find levels
+levels_conf <- quantile(global_conf_totals$total_conf,
+                           prob=c(.2,.4,.6,.8),
+                           type=1)
+
+# Set rank levels
+rank_levels <- c('very low', 'low', 'mid', 'high', 'very high')
+
+# Add rank levels to the data frame
+global_conf_rank <- global_conf_totals %>% 
+  mutate(rank = factor(case_when(
+    total_conf <= levels_conf[1] ~ 'very low',
+    total_conf <= levels_conf[2] ~ 'low',
+    total_conf <= levels_conf[3] ~ 'mid',
+    total_conf <= levels_conf[4] ~ 'high',
+    TRUE ~ 'very high'),
+    levels = rank_levels))
+
+# Create data frame with death totals and mean long/lat
+global_death_totals <- deaths_global %>% 
+  mutate(deaths = rowSums(across(5:ncol(deaths_global)))) %>% 
+  group_by(`Country/Region`) %>% 
+  summarize(mean_lat = mean(Lat, na.rm=TRUE),
+            mean_long = mean(Long, na.rm=TRUE),
+            total_deaths = sum(deaths, na.rm=TRUE))
+
+# Find levels
+levels_death <- quantile(global_death_totals$total_deaths,
+                            prob=c(.2,.4,.6,.8),
+                            type=1)
+
+# Add rank levels to the data frame
+global_deaths_rank <- global_death_totals %>% 
+  mutate(rank = factor(case_when(
+    total_deaths <= levels_death[1] ~ 'very low',
+    total_deaths <= levels_death[2] ~ 'low',
+    total_deaths <= levels_death[3] ~ 'mid',
+    total_deaths <= levels_death[4] ~ 'high',
+    TRUE ~ 'very high'),
+    levels = rank_levels))
+
+# Map colors to levels
+cols <- colorFactor(palette = c('darkblue', 'lightblue', 'grey', 'orange', 'red'),
+                    levels = c('very low', 'low', 'mid', 'high', 'very high'))
+
+# Create leaflet map visualization
+leaflet() %>% 
+  addProviderTiles('CartoDB.Positron') %>% 
+  setView(lat = 15, lng = 0, zoom = 1.5) %>% 
+  addCircleMarkers(data = global_conf_rank,
+                   lng = ~mean_long,
+                   lat = ~mean_lat,
+                   color = ~cols(rank),
+                   radius = 4,
+                   opacity = 0.75,
+                   label = ~`Country/Region`,
+                   group = 'Confirmed') %>% 
+  addCircleMarkers(data = global_deaths_rank,
+                   lng = ~mean_long,
+                   lat = ~mean_lat,
+                   color = ~cols(rank),
+                   radius = 4,
+                   opacity = 0.75,
+                   label = ~`Country/Region`,
+                   group = 'Deaths') %>% 
+  addLayersControl(overlayGroups = c('Confirmed', 'Deaths'),
+                   options = layersControlOptions(collapsed = FALSE)) %>% 
+  addLegend(position = "bottomleft",
+            pal = cols,
+            values = global_conf_rank$rank,
+            title = 'COVID-19 Severity',
+            opacity = 1)
 ```
 
-## Objective 2 - 
+## Objective 2
 
 ```{r ob2}
+# Arrange and clean global confirmed and death totals data frames
+global_conf_clean <- global_conf_totals %>% 
+  rename(Country = `Country/Region`, Count = total_conf) %>% 
+  select(Country, Count) %>% 
+  arrange(-Count) %>% 
+  mutate(Rank = c(1:nrow(global_conf_totals))) %>% 
+  relocate(Rank, .before = Country)
+global_death_clean <- global_death_totals %>% 
+  rename(Country = `Country/Region`, Count = total_deaths) %>% 
+  select(Country, Count) %>% 
+  arrange(-Count)
 
+# Format data frames to have commas for clarity
+global_conf_clean$Count <- format(global_conf_clean$Count, big.mark = ',',
+                                  scientific = FALSE)
+global_death_clean$Count <- format(global_death_clean$Count, big.mark = ',',
+                                   scientific = FALSE)
+
+# Build scroll kable table with formatting
+kbl(cbind(global_conf_clean, global_death_clean)) %>% 
+  add_header_above(c(' ' = 1,'Confirmations' = 2, 'Deaths' = 2)) %>% 
+  kable_paper(bootstrap_options = 'striped') %>% 
+  scroll_box(width = '100%', height = '400px')
 ```
 
 ## Objective 3 Zooming Into Our State (Felix)
@@ -167,6 +273,8 @@ plot_grid(p1, p2, labels = c("A", "B"))
 ```
 
 ## Objective 4
+
+visualizes the relationships between U.S. state population, confirmed COVID-19 cases, and deaths using log-transformed scatter plots to reveal patterns in the spread and impact of the virus, helping identify how population size correlates with case and death counts.
 
 ```{r ob4}
 # Merge population data from deaths_us (which contains Population column)
