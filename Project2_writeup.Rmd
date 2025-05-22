@@ -10,7 +10,7 @@ output:
 ```{r setup, include = FALSE}
 
 #### Load necessary packages ####
-packages <- c("knitr", "readr", "dplyr", "leaflet", "cowplot", "tidyr", "ggplot2")
+packages <- c("knitr", "readr", "dplyr", "leaflet", "cowplot", "tidyr", "ggplot2", "tidyverse")
 
 installed_packages <- rownames(installed.packages())
 for (p in packages) {
@@ -32,6 +32,7 @@ library(readr)
 library(dplyr)
 library(leaflet)
 library(cowplot)
+library(tidyverse)
 ```
 
 # Data
@@ -168,6 +169,41 @@ plot_grid(p1, p2, labels = c("A", "B"))
 ## Objective 4
 
 ```{r ob4}
+# Merge population data from deaths_us (which contains Population column)
+us_summary <- us_summary %>%
+  left_join(deaths_us %>% select(Province_State, Population), by = "Province_State") %>%
+  filter(Population > 0, total_confirmed > 0, total_deaths > 0)
+
+# Add log-transformed columns
+us_summary <- us_summary %>%
+  mutate(
+    log_population = log10(Population),
+    log_confirmed = log10(total_confirmed),
+    log_deaths = log10(total_deaths)
+  )
+
+# Scatter plot: Population vs Confirmed Cases
+pop_vs_confirmed <- ggplot(us_summary, aes(x = log_population, y = log_confirmed)) +
+  geom_point(color = "darkblue") +
+  labs(
+    title = "Log(Population) vs Log(Confirmed Cases)",
+    x = "Log10 Population",
+    y = "Log10 Confirmed Cases"
+  ) +
+  theme_minimal()
+
+# Scatter plot: Confirmed Cases vs Deaths
+confirmed_vs_deaths <- ggplot(us_summary, aes(x = log_confirmed, y = log_deaths)) +
+  geom_point(color = "darkred") +
+  labs(
+    title = "Log(Confirmed Cases) vs Log(Deaths)",
+    x = "Log10 Confirmed Cases",
+    y = "Log10 Deaths"
+  ) +
+  theme_minimal()
+
+# Combine plots using cowplot
+plot_grid(pop_vs_confirmed, confirmed_vs_deaths, labels = c("A", "B"))
 
 ```
 
