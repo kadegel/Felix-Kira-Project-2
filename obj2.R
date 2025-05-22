@@ -21,5 +21,5 @@ global_death_clean$Count <- format(global_death_clean$Count, big.mark = ',',
 # Build scroll kable table with formatting
 kbl(cbind(global_conf_clean, global_death_clean)) %>% 
   add_header_above(c(' ' = 1,'Confirmations' = 2, 'Deaths' = 2)) %>% 
-  kable_paper(bootstrap_options = 'striped') %>% 
+  kable_styling(bootstrap_options = 'striped') %>% 
   scroll_box(width = '100%', height = '400px')
