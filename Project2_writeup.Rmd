@@ -10,7 +10,8 @@ output:
 ```{r setup, include = FALSE}
 
 #### Load necessary packages ####
-packages <- c("knitr", "readr", "dplyr", "leaflet", "cowplot", "tidyr", "ggplot2", "tidyverse")
+packages <- c("knitr", "readr", "dplyr", "leaflet", "cowplot", "tidyr",
+              "ggplot2", "kableExtra")
 
 installed_packages <- rownames(installed.packages())
 for (p in packages) {
@@ -31,20 +32,20 @@ library(knitr)
 library(readr)
 library(dplyr)
 library(leaflet)
-library(cowplot)
-<<<<<<< HEAD
-library(tidyverse)
-=======
 library(tidyr)
 library(ggplot2)
->>>>>>> c8a4c4d6fa2724f929a04554679e89d564f54f8c
+library(cowplot)
+library(kableExtra)
 ```
+
+# GitHub link
+[Felix and Kira Project 2 GitHub Repo](https://github.com/kadegel/Felix-Kira-Project-2)
 
 # Data
 
 ## WHO Global Data
 Added by Kira Degelsmith
-```{bash fetch, include = FALSE}
+```{bash fetch_world}
 
 curl -L -o confirmed_global.csv https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv
 
@@ -56,7 +57,7 @@ curl -L -o recovered_global.csv https://raw.githubusercontent.com/CSSEGISandData
 
 ## USPRT US Data  
 Added by Felix Lopez  
-```{bash fetch_us, include = FALSE}
+```{bash fetch_us}
 curl -L -o time_series_covid19_confirmed_US.csv https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv
 
 curl -L -o time_series_covid19_deaths_US.csv https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv
@@ -71,36 +72,15 @@ recovered_global <- read_csv('recovered_global.csv')
 
 confirmed_us <- read_csv("time_series_covid19_confirmed_US.csv")
 deaths_us <- read_csv("time_series_covid19_deaths_US.csv")
-
-## (Felix)
-
-# Get latest date column
-latest_date_us <- names(confirmed_us)[ncol(confirmed_us)]
-
-# Group US confirmed by state
-confirmed_us_summary <- confirmed_us %>%
-  group_by(Province_State) %>%
-  summarise(total_confirmed = sum(!!sym(latest_date_us), na.rm = TRUE))
-
-# Group US deaths by state
-deaths_us_summary <- deaths_us %>%
-  group_by(Province_State) %>%
-  summarise(total_deaths = sum(!!sym(latest_date_us), na.rm = TRUE))
-
-# Merge
-us_summary <- left_join(confirmed_us_summary, deaths_us_summary, by = "Province_State")
-
-# Preview of table
-head(us_summary)
-
-##The code above downloads and processes the US COVID-19 confirmed and death data. It extracts the most recent totals for each state and merges the two datasets into a unified summary. 
-
 ```
 
 
 # Project Objectives
 
-## Objective 1
+## Objective 1  
+
+The following code creates a customized world map with color coding based on the severity of COVID-19 in each country. The markers may be hovered over to view country names, and the check boxes allow for the choice to view confirmed cases, deaths, or both.
+
 ```{r ob1}
 # Create data frame with country total confirmed cases and mean long/lat
 global_conf_totals <- confirmed_global %>% 
@@ -184,7 +164,9 @@ leaflet() %>%
             opacity = 1)
 ```
 
-## Objective 2
+## Objective 2  
+
+The following code creates a scroll table to show the amount of COVID-19 deaths and confirmations by country in order of count, where the countries with the most confirmations/deaths are shown first.
 
 ```{r ob2}
 # Arrange and clean global confirmed and death totals data frames
@@ -208,14 +190,36 @@ global_death_clean$Count <- format(global_death_clean$Count, big.mark = ',',
 # Build scroll kable table with formatting
 kbl(cbind(global_conf_clean, global_death_clean)) %>% 
   add_header_above(c(' ' = 1,'Confirmations' = 2, 'Deaths' = 2)) %>% 
-  kable_paper(bootstrap_options = 'striped') %>% 
+  kable_styling(bootstrap_options = 'striped') %>% 
   scroll_box(width = '100%', height = '400px')
 ```
 
-## Objective 3 Zooming Into Our State (Felix)
-We filtered the dataset to focus on California and reshaped the data to show daily confirmed COVID-19 cases. A statewide trend plot was created, marking key milestones: second vaccine dose, Delta, and Omicron variants. We then identified the top three counties by case count and plotted their trends over time. The final visualization compares statewide and county-level patterns side by side.
+## Objective 3  
+
+The following code filters the data to focus on California and reshapes the data to show daily confirmed COVID-19 cases. It creates a statewide trend plot, marking the following key milestones: second vaccine dose, Delta and Omicron variants. It plots the trends over time for the top three counties by case count. Finally, it creates a visualization that compares statewide and county-level patterns side by side.
 
 ```{r ob3}
+# Get latest date column
+latest_date_us <- names(confirmed_us)[ncol(confirmed_us)]
+
+# Group US confirmed by state
+confirmed_us_summary <- confirmed_us %>%
+  group_by(Province_State) %>%
+  summarise(total_confirmed = sum(!!sym(latest_date_us), na.rm = TRUE))
+
+# Group US deaths by state
+deaths_us_summary <- deaths_us %>%
+  group_by(Province_State) %>%
+  summarise(total_deaths = sum(!!sym(latest_date_us), na.rm = TRUE))
+
+# Merge
+us_summary <- left_join(confirmed_us_summary, deaths_us_summary, by = "Province_State")
+
+# Preview of table
+head(us_summary)
+
+##The code above downloads and processes the US COVID-19 confirmed and death data. It extracts the most recent totals for each state and merges the two datasets into a unified summary. 
+
 
 # Filter for California
 ca_data <- confirmed_us %>%
@@ -272,9 +276,9 @@ plot_grid(p1, p2, labels = c("A", "B"))
 
 ```
 
-## Objective 4
+## Objective 4  
 
-visualizes the relationships between U.S. state population, confirmed COVID-19 cases, and deaths using log-transformed scatter plots to reveal patterns in the spread and impact of the virus, helping identify how population size correlates with case and death counts.
+The following code visualizes the relationships between U.S. state population, confirmed COVID-19 cases, and deaths using log-transformed scatter plots to reveal patterns in the spread and impact of the virus, helping identify how population size correlates with case and death counts.
 
 ```{r ob4}
 # Merge population data from deaths_us (which contains Population column)
@@ -315,7 +319,7 @@ plot_grid(pop_vs_confirmed, confirmed_vs_deaths, labels = c("A", "B"))
 
 ```
 
-### GitHub Log
+# GitHub Log
 ```{bash gitlog} 
 git log --pretty=format:"%nSubject: %s%nAuthor: %aN%nDate: %aD%nBody: %b"
 ```
